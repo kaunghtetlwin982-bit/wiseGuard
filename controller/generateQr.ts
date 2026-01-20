@@ -3,6 +3,8 @@ import express from "express";
 import ServiceBroker from "../broker/broker"
 import ResponseStatus from "../helper/responseStatus";
 import type { Request, Response, NextFunction } from "express";
+import { generateClient } from "../src/wireguard";
+import { generateQR } from "../src/qr";
 
 const router = express.Router();
 
@@ -11,6 +13,23 @@ const handleError = (res: Response, err: Error) => {
   res.json(ResponseStatus.UNKNOWN(err.message));
 };
 
+let nextIP = 4;
+
+router.post("/create",async (req: Request, res: Response) => {
+    const { name, expire } = req.body;
+  if (!name) return res.status(400).json({ error: "name required" });
+
+  const user = generateClient(name, nextIP++);
+  const qr = await generateQR(user.clientConf);
+
+  res.json({
+    name,
+    ip: `10.10.0.${user.ip}`,
+    publicKey: user.publicKey,
+    expiresAt: expire || null,
+    qr
+  });
+});
 
 router.get("/list", async (req: Request, res: Response) => {
   try {

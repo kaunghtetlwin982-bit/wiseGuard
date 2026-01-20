@@ -1,5 +1,5 @@
 import express from "express";
-import user from  "./userController"
+import user from  "./generateQr"
 
 const router = express.Router();
 router.use("/", user)
