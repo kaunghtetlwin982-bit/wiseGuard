@@ -1,7 +1,7 @@
 import express from "express";
-import user from  "./generateQr"
+import qr from  "./generateQr"
 
 const router = express.Router();
-router.use("/", user)
+router.use("/", qr)
 
 export default router;
