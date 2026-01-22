@@ -8,92 +8,88 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// const router = require("express").Router();
 const express_1 = __importDefault(require("express"));
-const broker_1 = __importDefault(require("../broker/broker"));
-const responseStatus_1 = __importDefault(require("../helper/responseStatus"));
+// import ServiceBroker from "../broker/broker";
+const logic_1 = __importDefault(require("../service/userSevice/logic"));
 const router = express_1.default.Router();
-const handleError = (res, err) => {
-    console.error("Endpoint error:", err);
-    res.json(responseStatus_1.default.UNKNOWN(err.message));
-};
-router.get("/list", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// Create a new user
+router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { current, limit, role } = req.body;
-        console.log("req.body :", req.body);
-        if (!current || !limit) {
-            return res.json({ message: "Invalid parameters" });
+        const result = yield logic_1.default.createUserLogic(req.body);
+        res.status(200).json(result);
+    }
+    catch (error) {
+        console.error("Error creating user:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
+// Update a user
+router.put("/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        const result = yield logic_1.default.updateUserLogic(userId, req.body);
+        res.status(200).json(result);
+    }
+    catch (error) {
+        console.error("Error updating user:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
+// Delete a user
+router.delete("/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        const result = yield logic_1.default.deleteUserLogic(userId);
+        res.status(200).json(result);
+    }
+    catch (error) {
+        console.error("Error deleting user:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
+// List users with pagination
+router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const _a = req.query, { page = 1, limit = 10, sort_by = "createdAt", sort_order = "desc" } = _a, filters = __rest(_a, ["page", "limit", "sort_by", "sort_order"]);
+        const sortOrder = sort_order === "desc" ? -1 : 1;
+        const result = yield logic_1.default.getUsersLogic(parseInt(page), parseInt(limit), sort_by, sortOrder, filters);
+        res.status(200).json(result);
+    }
+    catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}));
+// Get a single user by ID
+router.get("/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        const result = yield logic_1.default.getUsersLogic(1, 1, "createdAt", -1, { _id: userId });
+        if (result.data && result.data.users && result.data.users.length > 0) {
+            res.status(200).json(result.data.users[0]);
         }
-        const result = yield broker_1.default.call("blog.list", { current, limit });
-        console.log("Result : ", result);
-        res.json({ result });
-    }
-    catch (err) {
-        handleError(res, err);
-    }
-}));
-router.get("/get/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { id } = req.params;
-        if (!id)
-            return res.json({ message: "Blog ID is required" });
-        const result = yield broker_1.default.call("blog.get", { id });
-        res.json({ result });
-    }
-    catch (err) {
-        handleError(res, err);
-    }
-}));
-router.post("/create", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        if (!req.body) {
-            return res.json({ message: "Not found req.body" });
+        else {
+            res.status(404).json({ error: "User not found" });
         }
-        console.log("req.body : ", req.body);
-        const { title, content } = req.body;
-        if (!title || !content) {
-            return res.json({ message: "Invalid arguments" });
-        }
-        // Call Moleculer service
-        const result = yield broker_1.default.call("blog.create", { title, content });
-        console.log("Result:", result);
-        res.json({ result });
     }
-    catch (err) {
-        handleError(res, err);
-    }
-}));
-router.put("/update/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { id } = req.params;
-        const { title, content } = req.body;
-        if (!id)
-            return res.json({ message: "Blog ID is required" });
-        const result = yield broker_1.default.call("blog.update", {
-            id,
-            title,
-            content,
-        });
-        res.json({ result });
-    }
-    catch (err) {
-        handleError(res, err);
-    }
-}));
-router.delete("/delete/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { id } = req.params;
-        if (!id)
-            return res.json({ message: "Blog ID is required" });
-        const result = yield broker_1.default.call("blog.delete", { id });
-        res.json({ result });
-    }
-    catch (err) {
-        handleError(res, err);
+    catch (error) {
+        console.error("Error fetching user:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
 }));
 exports.default = router;

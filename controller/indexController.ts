@@ -1,7 +1,9 @@
 import express from "express";
-import qr from  "./generateQr"
+import userController from "./userController";
 
 const router = express.Router();
-router.use("/", qr)
+
+// Mount user routes
+router.use("/users", userController);
 
 export default router;

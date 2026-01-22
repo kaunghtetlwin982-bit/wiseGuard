@@ -4,6 +4,7 @@ dotenv.config();
 interface Config {
   port: number;
   mongoUri: string;
+  mongoDBName: string;
   redis: {
     host: string;
     port: number;
@@ -24,6 +25,7 @@ console.log("Loading configuration from environment variables...",{
 const config: Config = {
   port: process.env.PORT ? Number(process.env.PORT) : 3000,
   mongoUri: process.env.MONGO_URI || "mongodb://localhost:27017/blog",
+  mongoDBName : process.env.mongoDBName || "vpn",
   redis: {
     host: process.env.REDIS_HOST || "127.0.0.1",
     port: process.env.REDIS_PORT ? Number(process.env.REDIS_PORT) : 6379,

@@ -1,8 +1,11 @@
 
 import { ServiceBroker } from "moleculer";
 import * as dotenv from "dotenv";
-import config from "../config/config";  
- console.log("Initializing Service Broker with Redis transporter...",);
+import config from "../config/config";
+// import userService from "../service/userSevice/service";
+// import ratingService from "../service/vpnService/service";
+
+console.log("Initializing Service Broker with Redis transporter...",);
 
 dotenv.config();
 console.log("Redis Config:", {
@@ -41,6 +44,9 @@ let theBroker = new ServiceBroker(
     logger: true,
     created(broker) {
         broker.logger.info("created");
+        // Load services when broker is created
+        // broker.createService(userService);
+        // broker.createService(ratingService);
     },
     started(broker) {
         broker.logger.info("started");
