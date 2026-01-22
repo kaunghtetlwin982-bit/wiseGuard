@@ -8,10 +8,11 @@ export interface IVpnKey extends Document {
   outlineKeyId: string;
   accessUrl: string;
 
+  duration: "oneMonth" | "twoMonth" | "threeMonth";  // Duration type
   dataLimitBytes?: number;
   expiresAt?: Date;
 
-  status: "active" | "revoked";
+  status: "active" | "expired" | "revoked";
 }
 
 const vpnKeySchema = new Schema<IVpnKey>(
@@ -57,6 +58,12 @@ const vpnKeySchema = new Schema<IVpnKey>(
       required: true,
     },
 
+    duration: {
+      type: String,
+      enum: ["oneMonth", "twoMonth", "threeMonth"],
+      required: true,
+    },
+
     dataLimitBytes: {
       type: Number,
     },
@@ -67,7 +74,7 @@ const vpnKeySchema = new Schema<IVpnKey>(
 
     status: {
       type: String,
-      enum: ["active", "inactive"],
+      enum: ["active", "expired", "revoked"],
       default: "active",
     },
   },

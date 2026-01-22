@@ -45,25 +45,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv = __importStar(require("dotenv"));
-dotenv.config();
-const express_1 = __importDefault(require("express"));
-const broker_1 = __importDefault(require("./broker/broker"));
-const indexController_1 = __importDefault(require("./controller/indexController"));
-const config_1 = __importDefault(require("./config/config"));
-const database_helper_1 = __importDefault(require("./helper/database_helper"));
-require("./cron/vpnExpirationCron"); // Import cron jobs
-broker_1.default.start().then(() => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, database_helper_1.default)();
-    const app = (0, express_1.default)();
-    console.log("Something fix");
-    app.use(express_1.default.json());
-    app.get("/", (req, res) => {
-        res.send("Welcome to Student Management System API");
-    });
-    app.use("/api", indexController_1.default);
-    const PORT = config_1.default.port || 8000;
-    app.listen(PORT, "0.0.0.0", () => {
-        console.log(`Server is listening on http://0.0.0.0:${PORT}`);
-    });
-}));
+const cron = __importStar(require("node-cron"));
+const logic_1 = __importDefault(require("../service/vpnService/logic"));
+// Cron job to expire VPN keys every midnight at 01 second
+// Format: "second minute hour day month dayOfWeek"
+cron.schedule("1 0 0 * * *", () => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("🔄 Running VPN key expiration cron job at", new Date().toISOString());
+    try {
+        yield logic_1.default.expireVpnKeys();
+        console.log("✅ VPN key expiration completed successfully");
+    }
+    catch (error) {
+        console.error("❌ Error in VPN key expiration cron job:", error);
+    }
+}), {
+    timezone: "UTC" // You can change this to your timezone
+});
+console.log("⏰ VPN expiration cron job scheduled: Every midnight at 01 second UTC");
+exports.default = cron;

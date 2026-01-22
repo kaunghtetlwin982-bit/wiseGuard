@@ -17,6 +17,7 @@ const config = {
     port: process.env.PORT ? Number(process.env.PORT) : 3000,
     mongoUri: process.env.MONGO_URI || "mongodb://localhost:27017/blog",
     mongoDBName: process.env.mongoDBName || "vpn",
+    JWT_SECRET: process.env.JWT_SECRET || "",
     redis: {
         host: process.env.REDIS_HOST || "127.0.0.1",
         port: process.env.REDIS_PORT ? Number(process.env.REDIS_PORT) : 6379,

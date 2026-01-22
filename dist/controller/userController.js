@@ -26,9 +26,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 // import ServiceBroker from "../broker/broker";
 const logic_1 = __importDefault(require("../service/userSevice/logic"));
+const middleware_1 = require("../middleware");
 const router = express_1.default.Router();
 // Create a new user
-router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/create", middleware_1.authenticateToken, middleware_1.requireAdmin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield logic_1.default.createUserLogic(req.body);
         res.status(200).json(result);
@@ -39,7 +40,7 @@ router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 }));
 // Update a user
-router.put("/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.put("/:userId", middleware_1.authenticateToken, middleware_1.requireAdmin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.params;
         const result = yield logic_1.default.updateUserLogic(userId, req.body);
@@ -51,7 +52,7 @@ router.put("/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 }));
 // Delete a user
-router.delete("/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.delete("/:userId", middleware_1.authenticateToken, middleware_1.requireAdmin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.params;
         const result = yield logic_1.default.deleteUserLogic(userId);
@@ -63,7 +64,7 @@ router.delete("/:userId", (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 }));
 // List users with pagination
-router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/", middleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const _a = req.query, { page = 1, limit = 10, sort_by = "createdAt", sort_order = "desc" } = _a, filters = __rest(_a, ["page", "limit", "sort_by", "sort_order"]);
         const sortOrder = sort_order === "desc" ? -1 : 1;
@@ -76,7 +77,7 @@ router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 }));
 // Get a single user by ID
-router.get("/:userId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/:userId", middleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.params;
         const result = yield logic_1.default.getUsersLogic(1, 1, "createdAt", -1, { _id: userId });

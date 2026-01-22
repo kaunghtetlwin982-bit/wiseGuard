@@ -12,28 +12,172 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// service/course.logic.ts
-const repository_1 = __importDefault(require("./repository"));
-const responseStatus_1 = __importDefault(require("../helper/responseStatus"));
+const repository_1 = require("./repository");
+const responseStatus_1 = __importDefault(require("../../helper/responseStatus"));
 const mongoose_1 = __importDefault(require("mongoose"));
-// const parseFilters = (filters: any) => {
-//   if (!filters) return {};
-//   const parsed: any = {};
-//   Object.keys(filters).forEach((key) => {
-//     if (filters[key]) parsed[key] = filters[key];
-//   });
-//   return parsed;
-// };
-const parseRatingFilters = (filters = {}) => {
+const vpnModel_1 = require("../../models/vpnModel");
+const createVpnKeyLogic = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Calculate expiresAt based on duration if not provided
+        let expiresAt = payload.expiresAt;
+        if (!expiresAt && payload.duration) {
+            const now = new Date();
+            switch (payload.duration) {
+                case "oneMonth":
+                    expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+                    break;
+                case "twoMonth":
+                    expiresAt = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000); // 60 days
+                    break;
+                case "threeMonth":
+                    expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 90 days
+                    break;
+            }
+        }
+        const vpnKeyPayload = Object.assign(Object.assign({}, payload), { expiresAt, status: payload.status || "active" });
+        const vpnKey = yield (0, repository_1.createVpnKey)(vpnKeyPayload);
+        if (!vpnKey) {
+            return responseStatus_1.default.NOT_IMPLEMENTED("VPN key could not be created");
+        }
+        return responseStatus_1.default.OK(vpnKey, "VPN key created successfully");
+    }
+    catch (error) {
+        console.error("Error creating VPN key:", error);
+        return responseStatus_1.default.UNKNOWN("Failed to create VPN key");
+    }
+});
+const updateVpnKeyLogic = (vpnKeyId, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Recalculate expiresAt if duration is being updated
+        let updatePayload = Object.assign({}, payload);
+        if (payload.duration && !payload.expiresAt) {
+            const now = new Date();
+            switch (payload.duration) {
+                case "oneMonth":
+                    updatePayload.expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                    break;
+                case "twoMonth":
+                    updatePayload.expiresAt = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+                    break;
+                case "threeMonth":
+                    updatePayload.expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+                    break;
+            }
+        }
+        const vpnKey = yield (0, repository_1.updateVpnKey)(vpnKeyId, updatePayload);
+        if (!vpnKey) {
+            return responseStatus_1.default.NOT_FOUND("VPN key not found");
+        }
+        return responseStatus_1.default.OK(vpnKey, "VPN key updated successfully");
+    }
+    catch (error) {
+        console.error("Error updating VPN key:", error);
+        return responseStatus_1.default.UNKNOWN("Failed to update VPN key");
+    }
+});
+const deleteVpnKeyLogic = (vpnKeyId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const vpnKey = yield (0, repository_1.deleteVpnKey)(vpnKeyId);
+        if (!vpnKey) {
+            return responseStatus_1.default.NOT_FOUND("VPN key not found");
+        }
+        return responseStatus_1.default.OK(null, "VPN key deleted successfully");
+    }
+    catch (error) {
+        console.error("Error deleting VPN key:", error);
+        return responseStatus_1.default.UNKNOWN("Failed to delete VPN key");
+    }
+});
+const getVpnKeysLogic = (currentPage_1, limit_1, ...args_1) => __awaiter(void 0, [currentPage_1, limit_1, ...args_1], void 0, function* (currentPage, limit, sort_by = "createdAt", sort_order = -1, filters = {}) {
+    try {
+        const page = Math.max(Number(currentPage), 1);
+        const perPage = Math.max(Number(limit), 1);
+        const total = yield (0, repository_1.countVpnKeys)(filters);
+        const vpnKeys = yield (0, repository_1.getVpnKeys)(page, perPage, sort_by, sort_order, filters);
+        if (total === 0) {
+            return responseStatus_1.default.OK({
+                vpnKeys: [],
+                pagination: {
+                    currentPage: page,
+                    limit: perPage,
+                    rowsPerPage: 0,
+                    total: 0,
+                },
+            });
+        }
+        return responseStatus_1.default.OK({
+            vpnKeys,
+            pagination: {
+                currentPage: page,
+                limit: perPage,
+                rowsPerPage: Math.ceil(total / perPage),
+                total,
+            },
+        }, "VPN keys fetched successfully");
+    }
+    catch (error) {
+        console.error("Error fetching VPN keys:", error);
+        return responseStatus_1.default.UNKNOWN("Failed to fetch VPN keys");
+    }
+});
+const getVpnKeyByIdLogic = (vpnKeyId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const vpnKey = yield (0, repository_1.getVpnKeyById)(vpnKeyId);
+        if (!vpnKey) {
+            return responseStatus_1.default.NOT_FOUND("VPN key not found");
+        }
+        return responseStatus_1.default.OK(vpnKey, "VPN key fetched successfully");
+    }
+    catch (error) {
+        console.error("Error fetching VPN key:", error);
+        return responseStatus_1.default.UNKNOWN("Failed to fetch VPN key");
+    }
+});
+const getVpnKeysByUserIdLogic = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const vpnKeys = yield (0, repository_1.getVpnKeysByUserId)(userId);
+        return responseStatus_1.default.OK(vpnKeys, "User VPN keys fetched successfully");
+    }
+    catch (error) {
+        console.error("Error fetching user VPN keys:", error);
+        return responseStatus_1.default.UNKNOWN("Failed to fetch user VPN keys");
+    }
+});
+const revokeVpnKeyLogic = (vpnKeyId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const vpnKey = yield (0, repository_1.revokeVpnKey)(vpnKeyId);
+        if (!vpnKey) {
+            return responseStatus_1.default.NOT_FOUND("VPN key not found");
+        }
+        return responseStatus_1.default.OK(vpnKey, "VPN key revoked successfully");
+    }
+    catch (error) {
+        console.error("Error revoking VPN key:", error);
+        return responseStatus_1.default.UNKNOWN("Failed to revoke VPN key");
+    }
+});
+const parseVpnFilters = (filters = {}) => {
     const match = {};
-    if (filters.batchId) {
-        match.batchId = new mongoose_1.default.Types.ObjectId(filters.batchId);
+    if (filters.userId) {
+        match.userId = new mongoose_1.default.Types.ObjectId(filters.userId);
     }
-    if (filters.studentId) {
-        match.studentId = new mongoose_1.default.Types.ObjectId(filters.studentId);
+    if (filters.createdBy) {
+        match.createdBy = new mongoose_1.default.Types.ObjectId(filters.createdBy);
     }
-    if (filters.rating) {
-        match.rating = Number(filters.rating);
+    if (filters.serverId) {
+        match.serverId = new mongoose_1.default.Types.ObjectId(filters.serverId);
+    }
+    if (filters.status) {
+        match.status = filters.status;
+    }
+    if (filters.createdByRole) {
+        match.createdByRole = filters.createdByRole;
+    }
+    if (filters.duration) {
+        match.duration = filters.duration;
+    }
+    if (filters.outlineKeyId) {
+        match.outlineKeyId = filters.outlineKeyId;
     }
     if (filters.startDate || filters.endDate) {
         match.createdAt = {};
@@ -44,83 +188,145 @@ const parseRatingFilters = (filters = {}) => {
             match.createdAt.$lte = new Date(filters.endDate);
         }
     }
+    if (filters.expiresAt) {
+        match.expiresAt = { $lte: new Date() };
+    }
     return match;
 };
-const ratingList = (currentPage, limit, sort_by, sort_order, filters, userRoleName, roleEntityId) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("In logic ratingList 64", {
-        currentPage,
-        limit,
-        sort_by,
-        sort_order,
-        filters,
-        userRoleName,
-        roleEntityId,
-    });
-    const page = Math.max(Number(currentPage), 1);
-    const perPage = Math.max(Number(limit), 1);
-    const appliedFilters = parseRatingFilters(filters);
-    const validSortOrder = (sort_order === 'desc' ? 'desc' : 'asc');
-    let total = 0;
-    let ratings = [];
-    //  ROLE HANDLING
-    switch (userRoleName) {
-        case "admin":
-            total = yield repository_1.default.countBatchAverageRatings(appliedFilters);
-            ratings = yield repository_1.default.getBatchAverageRatings(page, perPage, 
-            // sort_by,
-            validSortOrder, appliedFilters);
-            break;
-        case "lecturer":
-            if (!roleEntityId)
-                throw new Error("Lecturer ID missing");
-            total = yield repository_1.default.countBatchAverageRatingsByLecturer(roleEntityId, appliedFilters);
-            ratings = yield repository_1.default.getBatchAverageRatingsByLecturer(roleEntityId, page, perPage, validSortOrder || "asc", appliedFilters);
-            break;
-        case "student":
-            appliedFilters.studentId = new mongoose_1.default.Types.ObjectId(roleEntityId);
-            total = yield repository_1.default.countRatings(appliedFilters);
-            ratings = yield repository_1.default.getRatings(page, perPage, sort_by, validSortOrder, appliedFilters, false);
-            break;
-        default:
-            throw new Error("Invalid role");
-    }
-    if (total === 0) {
-        return responseStatus_1.default.OK({
-            by: [],
-            pagination: {
-                currentPage: page,
-                limit: perPage,
-                rowsPerPage: 0,
-                total: 0,
-            },
+const expireVpnKeys = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const now = new Date();
+        const result = yield vpnModel_1.VpnKey.updateMany({
+            status: "active",
+            expiresAt: { $lte: now }
+        }, {
+            status: "expired"
         });
+        console.log(`Expired ${result.modifiedCount} VPN keys`);
+        return result;
     }
-    return responseStatus_1.default.OK({
-        by: ratings,
-        pagination: {
-            currentPage: page,
-            limit: perPage,
-            rowsPerPage: Math.ceil(total / perPage),
-            total,
-        },
-    }, "Ratings fetched successfully");
-});
-const createRating = (batchId, rating, feedback, studentId) => __awaiter(void 0, void 0, void 0, function* () {
-    // return repo.runInTransaction(async (session) => {
-    const rate = yield repository_1.default.createRating({ batchId,
-        studentId,
-        rating,
-        feedback, });
-    console.log("Created Rating :", rate);
-    if (!rate) {
-        return responseStatus_1.default.NOT_IMPLEMENTED("Rating could not be created");
+    catch (error) {
+        console.error("Error expiring VPN keys:", error);
+        throw error;
     }
-    return responseStatus_1.default.OK(null, "Rating created successfully");
-    // });
 });
 exports.default = {
-    ratingList,
-    // listRatings,
-    createRating,
-    // getStudentsByCourse,
+    createVpnKeyLogic,
+    updateVpnKeyLogic,
+    deleteVpnKeyLogic,
+    getVpnKeysLogic,
+    getVpnKeyByIdLogic,
+    getVpnKeysByUserIdLogic,
+    revokeVpnKeyLogic,
+    parseVpnFilters,
+    expireVpnKeys,
 };
+//   sort_by: string,
+//   sort_order: string,
+//   filters: any,
+//   userRoleName?: string,
+//   roleEntityId?: string
+// ) => {
+//   console.log("In logic ratingList 64", {
+//   currentPage,
+//   limit,
+//   sort_by,
+//   sort_order,
+//   filters,
+//   userRoleName,
+//   roleEntityId,
+// });
+//   const page = Math.max(Number(currentPage), 1);
+//   const perPage = Math.max(Number(limit), 1);
+//   const appliedFilters = parseRatingFilters(filters);
+//   const validSortOrder = (sort_order === 'desc' ? 'desc' : 'asc') as 'asc' | 'desc' | undefined;
+//   let total = 0;
+//   let ratings = [];
+//   //  ROLE HANDLING
+//   switch (userRoleName) {
+//     case "admin":
+//       total = await repo.countBatchAverageRatings(appliedFilters);
+//       ratings = await repo.getBatchAverageRatings(
+//         page,
+//         perPage,
+//         // sort_by,
+//         validSortOrder,
+//         appliedFilters,
+//         // true // admin
+//       );
+//       break;
+//     case "lecturer":
+//       if (!roleEntityId) throw new Error("Lecturer ID missing");
+//       total = await repo.countBatchAverageRatingsByLecturer(roleEntityId, appliedFilters);
+//       ratings = await repo.getBatchAverageRatingsByLecturer(
+//         roleEntityId,
+//         page,
+//         perPage,
+//         validSortOrder || "asc",
+//         appliedFilters
+//       );
+//       break;
+//     case "student":
+//       appliedFilters.studentId = new mongoose.Types.ObjectId(roleEntityId!);
+//       total = await repo.countRatings(appliedFilters);
+//       ratings = await repo.getRatings(
+//         page,
+//         perPage,
+//         sort_by,
+//         validSortOrder,
+//         appliedFilters,
+//         false
+//       );
+//       break;
+//     default:
+//       throw new Error("Invalid role");
+//   }
+//   if (total === 0) {
+//     return Response.OK({
+//       by: [],
+//       pagination: {
+//         currentPage: page,
+//         limit: perPage,
+//         rowsPerPage: 0,
+//         total: 0,
+//       },
+//     });
+//   }
+//   return Response.OK(
+//     {
+//       by: ratings,
+//       pagination: {
+//         currentPage: page,
+//         limit: perPage,
+//         rowsPerPage: Math.ceil(total / perPage),
+//         total,
+//       },
+//     },
+//     "Ratings fetched successfully"
+//   );
+// };
+// const createRating = async (
+//   batchId: string,
+//   rating: number,
+//   feedback: string,
+//   studentId: string
+// ) => {
+//   // return repo.runInTransaction(async (session) => {
+//   const rate = await repo.createRating({batchId,
+//   studentId,
+//   rating,
+//   feedback,}
+// );
+//   console.log("Created Rating :", rate);
+//   if (!rate) {
+//     return Response.NOT_IMPLEMENTED("Rating could not be created");
+//   }
+//   return Response.OK(null, "Rating created successfully");
+//   // });
+// };
+// export default {
+//   ratingList,
+//   // listRatings,
+//   createRating,
+//   // getStudentsByCourse,
+// };

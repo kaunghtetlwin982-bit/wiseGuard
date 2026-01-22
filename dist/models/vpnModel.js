@@ -71,6 +71,11 @@ const vpnKeySchema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
+    duration: {
+        type: String,
+        enum: ["oneMonth", "twoMonth", "threeMonth"],
+        required: true,
+    },
     dataLimitBytes: {
         type: Number,
     },
@@ -79,7 +84,7 @@ const vpnKeySchema = new mongoose_1.Schema({
     },
     status: {
         type: String,
-        enum: ["active", "inactive"],
+        enum: ["active", "expired", "revoked"],
         default: "active",
     },
 }, { timestamps: true });

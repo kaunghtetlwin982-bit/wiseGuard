@@ -1,6 +1,7 @@
 import { createUser, updateUser, deleteUser, getUsers, countUsers } from "./repository";
 import Response from "../../helper/responseStatus";
 import mongoose, { get, Types } from "mongoose";
+import * as bcrypt from "bcrypt";
 
 const createUserLogic = async (payload: {
   name: string;
@@ -11,7 +12,17 @@ const createUserLogic = async (payload: {
   roleId: "developer" | "owner" | "agent";
 }) => {
   try {
-    const user = await createUser(payload);
+    // Hash the password before creating user
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(payload.password, saltRounds);
+
+    // Create user with hashed password
+    const userPayload = {
+      ...payload,
+      password: hashedPassword
+    };
+
+    const user = await createUser(userPayload);
     if (!user) {
       return Response.NOT_IMPLEMENTED("User could not be created");
     }
@@ -35,7 +46,15 @@ const updateUserLogic = async (
   }>
 ) => {
   try {
-    const user = await updateUser(userId, payload);
+    let updatePayload = { ...payload };
+
+    // Hash password if it's being updated
+    if (payload.password) {
+      const saltRounds = 10;
+      updatePayload.password = await bcrypt.hash(payload.password, saltRounds);
+    }
+
+    const user = await updateUser(userId, updatePayload);
     if (!user) {
       return Response.NOT_FOUND("User not found");
     }

@@ -16,7 +16,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const config_1 = __importDefault(require("../config/config"));
 const uri = config_1.default.mongoUri; // your MongoDB Atlas URI
 const connectToDatabase = () => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("Mongo URI:", uri);
+    // console.log("Mongo URI:", uri);
     if (!uri) {
         throw new Error("MONGO_URI is not defined in environment variables!");
     }
@@ -24,7 +24,7 @@ const connectToDatabase = () => __awaiter(void 0, void 0, void 0, function* () {
         const connection = yield mongoose_1.default.connect(uri, {
             dbName: config_1.default.mongoDBName,
         });
-        // console.log("Connected to MongoDB via Mongoose",connection.Error);
+        // console.log("Connected to MongoDB via Mongoose",connection);
     }
     catch (error) {
         console.error(" MongoDB connection error:", error);

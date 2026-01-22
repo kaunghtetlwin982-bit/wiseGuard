@@ -45,25 +45,55 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv = __importStar(require("dotenv"));
-dotenv.config();
-const express_1 = __importDefault(require("express"));
-const broker_1 = __importDefault(require("./broker/broker"));
-const indexController_1 = __importDefault(require("./controller/indexController"));
-const config_1 = __importDefault(require("./config/config"));
-const database_helper_1 = __importDefault(require("./helper/database_helper"));
-require("./cron/vpnExpirationCron"); // Import cron jobs
-broker_1.default.start().then(() => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, database_helper_1.default)();
-    const app = (0, express_1.default)();
-    console.log("Something fix");
-    app.use(express_1.default.json());
-    app.get("/", (req, res) => {
-        res.send("Welcome to Student Management System API");
-    });
-    app.use("/api", indexController_1.default);
-    const PORT = config_1.default.port || 8000;
-    app.listen(PORT, "0.0.0.0", () => {
-        console.log(`Server is listening on http://0.0.0.0:${PORT}`);
-    });
-}));
+exports.authenticateToken = void 0;
+const jwt = __importStar(require("jsonwebtoken"));
+const userModel_1 = require("../models/userModel");
+const responseStatus_1 = __importDefault(require("../helper/responseStatus"));
+const config_1 = __importDefault(require("../config/config"));
+const authenticateToken = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
+        if (!token) {
+            res.status(401).json(responseStatus_1.default.UNAUTHENTICATED("Access token is required"));
+            return;
+        }
+        console.log('token : ', token);
+        console.log("config.JWT_SECRET : ", config_1.default.JWT_SECRET);
+        // Verify JWT token
+        const decoded = jwt.verify(token, config_1.default.JWT_SECRET || "your-secret-key");
+        console.log("decoded : ", decoded);
+        // Check if user exists and is active
+        const user = yield userModel_1.User.findById(decoded.userId);
+        console.log("user : ", user);
+        if (!user) {
+            res.status(401).json(responseStatus_1.default.UNAUTHENTICATED("User not found"));
+            return;
+        }
+        if (user.status !== "active") {
+            res.status(403).json(responseStatus_1.default.PERMISSION_DENIED("Account is not active"));
+            return;
+        }
+        // Attach user to request object
+        req.user = {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            roleId: user.roleId,
+        };
+        next();
+    }
+    catch (error) {
+        console.error("Authentication error:", error);
+        if (error instanceof jwt.JsonWebTokenError) {
+            res.status(401).json(responseStatus_1.default.UNAUTHENTICATED("Invalid token"));
+            return;
+        }
+        if (error instanceof jwt.TokenExpiredError) {
+            res.status(401).json(responseStatus_1.default.UNAUTHENTICATED("Token expired"));
+            return;
+        }
+        res.status(500).json(responseStatus_1.default.UNKNOWN("Authentication failed"));
+    }
+});
+exports.authenticateToken = authenticateToken;

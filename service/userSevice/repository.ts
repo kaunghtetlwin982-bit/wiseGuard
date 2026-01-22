@@ -1,6 +1,5 @@
 import { User } from "../../models/userModel";
 import { Types } from "mongoose";
-import Response from "../../helper/responseStatus";
 
 export const createUser = async (payload: {
   name: string;
