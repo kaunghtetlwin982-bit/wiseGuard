@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.requireRole = exports.requireOwner = exports.requireAdmin = void 0;
+exports.requireRole = exports.requireOwnerAndDeveloper = exports.requireOwner = exports.requireAdmin = void 0;
 const responseStatus_1 = __importDefault(require("../helper/responseStatus"));
 const requireAdmin = (req, res, next) => {
     try {
@@ -33,6 +33,7 @@ const requireOwner = (req, res, next) => {
             res.status(401).json(responseStatus_1.default.UNAUTHENTICATED("Authentication required"));
             return;
         }
+        console.log("userData : ", req.user);
         // Check if user has owner role specifically
         if (req.user.roleId !== "owner") {
             res.status(403).json(responseStatus_1.default.PERMISSION_DENIED("Owner access required"));
@@ -46,6 +47,27 @@ const requireOwner = (req, res, next) => {
     }
 };
 exports.requireOwner = requireOwner;
+const requireOwnerAndDeveloper = (req, res, next) => {
+    try {
+        // Check if user is authenticated
+        if (!req.user) {
+            res.status(401).json(responseStatus_1.default.UNAUTHENTICATED("Authentication required"));
+            return;
+        }
+        console.log("userData : ", req.user);
+        // Check if user has owner role specifically
+        if (req.user.roleId === "agent") {
+            res.status(403).json(responseStatus_1.default.PERMISSION_DENIED("Owner and Develoepr access required"));
+            return;
+        }
+        next();
+    }
+    catch (error) {
+        console.error("Owner authorization error:", error);
+        res.status(500).json(responseStatus_1.default.UNKNOWN("Authorization failed"));
+    }
+};
+exports.requireOwnerAndDeveloper = requireOwnerAndDeveloper;
 const requireRole = (allowedRoles) => {
     return (req, res, next) => {
         try {

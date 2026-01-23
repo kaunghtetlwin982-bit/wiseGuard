@@ -53,6 +53,7 @@ const indexController_1 = __importDefault(require("./controller/indexController"
 const config_1 = __importDefault(require("./config/config"));
 const database_helper_1 = __importDefault(require("./helper/database_helper"));
 require("./cron/vpnExpirationCron"); // Import cron jobs
+broker_1.default.loadService(__dirname + "/service/vpnService/service");
 broker_1.default.start().then(() => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, database_helper_1.default)();
     const app = (0, express_1.default)();

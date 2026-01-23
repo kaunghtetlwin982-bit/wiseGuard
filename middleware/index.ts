@@ -1,2 +1,2 @@
 export { authenticateToken } from "./authMiddleware";
-export { requireAdmin, requireOwner, requireRole } from "./adminMiddleware";
+export { requireAdmin, requireOwner, requireOwnerAndDeveloper, requireRole } from "./adminMiddleware";

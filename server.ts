@@ -7,6 +7,7 @@ import config from "./config/config";
 import connectToDatabase from "./helper/database_helper";
 import "./cron/vpnExpirationCron"; // Import cron jobs
 
+ServiceBroker.loadService(__dirname + "/service/vpnService/service");
 
 
 

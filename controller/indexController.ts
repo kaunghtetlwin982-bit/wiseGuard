@@ -2,6 +2,7 @@ import express from "express";
 import userController from "./userController";
 import authController from "./authController";
 import vpnController from "./vpnConroller";
+import serverController from "./serverController";
 
 const router = express.Router();
 
@@ -13,5 +14,8 @@ router.use("/users", userController);
 
 // Mount VPN routes
 router.use("/vpn", vpnController);
+
+// Mount server routes
+router.use("/servers", serverController);
 
 export default router;

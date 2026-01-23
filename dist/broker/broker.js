@@ -40,7 +40,7 @@ const moleculer_1 = require("moleculer");
 const dotenv = __importStar(require("dotenv"));
 const config_1 = __importDefault(require("../config/config"));
 // import userService from "../service/userSevice/service";
-// import ratingService from "../service/vpnService/service";
+const service_1 = __importDefault(require("../service/vpnService/service"));
 console.log("Initializing Service Broker with Redis transporter...");
 dotenv.config();
 console.log("Redis Config:", {
@@ -78,7 +78,7 @@ let theBroker = new moleculer_1.ServiceBroker({
         broker.logger.info("created");
         // Load services when broker is created
         // broker.createService(userService);
-        // broker.createService(ratingService);
+        broker.createService(service_1.default);
     },
     started(broker) {
         broker.logger.info("started");

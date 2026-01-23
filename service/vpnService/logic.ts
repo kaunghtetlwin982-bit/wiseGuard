@@ -11,12 +11,14 @@ import {
 import Response from "../../helper/responseStatus";
 import mongoose from "mongoose";
 import { VpnKey } from "../../models/vpnModel";
+import broker from "../../broker/broker";
 
 const createVpnKeyLogic = async (payload: {
   userId: mongoose.Types.ObjectId;
   createdBy: mongoose.Types.ObjectId;
   createdByRole: "owner" | "agent" | "developer";
   serverId: mongoose.Types.ObjectId;
+  server?: string; // Add server as optional string
   outlineKeyId: string;
   accessUrl: string;
   duration: "oneMonth" | "twoMonth" | "threeMonth";
@@ -41,12 +43,31 @@ const createVpnKeyLogic = async (payload: {
           break;
       }
     }
+    const {serverId}= payload;
+
+    // Call server-specific service based on server choice
+    let serverResult: { outlineKeyId?: string; accessUrl?: string } | undefined;
+    if (payload.server) {
+      try {
+        serverResult = await broker.call(`${payload.server}.createVpnKey`, payload);
+      } catch (error) {
+        console.error(`Error calling service ${payload.server}.createVpnKey:`, error);
+        return Response.UNKNOWN(`Failed to create VPN key on server ${payload.server}`);
+      }
+    }
 
     const vpnKeyPayload = {
       ...payload,
       expiresAt,
-      status: payload.status || "active"
+      status: payload.status || "active",
+      outlineKeyId: serverResult?.outlineKeyId || payload.outlineKeyId,
+      accessUrl: serverResult?.accessUrl || payload.accessUrl,
     };
+
+    // Ensure required fields are present
+    if (!vpnKeyPayload.outlineKeyId || !vpnKeyPayload.accessUrl) {
+      return Response.INVALID_ARGUMENT("outlineKeyId and accessUrl are required");
+    }
 
     const vpnKey = await createVpnKey(vpnKeyPayload);
     if (!vpnKey) {
@@ -61,6 +82,7 @@ const createVpnKeyLogic = async (payload: {
 
 const updateVpnKeyLogic = async (
   vpnKeyId: string,
+  currentUserId: string,
   payload: Partial<{
     userId: mongoose.Types.ObjectId;
     createdBy: mongoose.Types.ObjectId;
@@ -75,6 +97,17 @@ const updateVpnKeyLogic = async (
   }>
 ) => {
   try {
+    // First check if the VPN key exists and if the current user is the creator
+    const existingVpnKey = await getVpnKeyById(vpnKeyId);
+    if (!existingVpnKey) {
+      return Response.NOT_FOUND("VPN key not found");
+    }
+
+    // Check if the current user is the creator of this VPN key
+    if (existingVpnKey.createdBy.toString() !== currentUserId) {
+      return Response.PERMISSION_DENIED("You can only update VPN keys you created");
+    }
+
     // Recalculate expiresAt if duration is being updated
     let updatePayload = { ...payload };
     if (payload.duration && !payload.expiresAt) {
@@ -103,8 +136,19 @@ const updateVpnKeyLogic = async (
   }
 };
 
-const deleteVpnKeyLogic = async (vpnKeyId: string) => {
+const deleteVpnKeyLogic = async (vpnKeyId: string, currentUserId: string) => {
   try {
+    // First check if the VPN key exists and if the current user is the creator
+    const existingVpnKey = await getVpnKeyById(vpnKeyId);
+    if (!existingVpnKey) {
+      return Response.NOT_FOUND("VPN key not found");
+    }
+
+    // Check if the current user is the creator of this VPN key
+    if (existingVpnKey.createdBy.toString() !== currentUserId) {
+      return Response.PERMISSION_DENIED("You can only delete VPN keys you created");
+    }
+
     const vpnKey = await deleteVpnKey(vpnKeyId);
     if (!vpnKey) {
       return Response.NOT_FOUND("VPN key not found");
@@ -162,16 +206,22 @@ const getVpnKeysLogic = async (
 
 const getVpnKeyByIdLogic = async (vpnKeyId: string) => {
   try {
+    console.log("getVpnKeyByIdLogic ")
     const vpnKey = await getVpnKeyById(vpnKeyId);
+    console.log("vpnKey : ", vpnKey)
+
     if (!vpnKey) {
       return Response.NOT_FOUND("VPN key not found");
     }
+    
+
     return Response.OK(vpnKey, "VPN key fetched successfully");
   } catch (error) {
     console.error("Error fetching VPN key:", error);
     return Response.UNKNOWN("Failed to fetch VPN key");
   }
 };
+
 
 const getVpnKeysByUserIdLogic = async (userId: string) => {
   try {

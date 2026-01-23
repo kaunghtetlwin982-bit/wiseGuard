@@ -16,6 +16,7 @@ const repository_1 = require("./repository");
 const responseStatus_1 = __importDefault(require("../../helper/responseStatus"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const vpnModel_1 = require("../../models/vpnModel");
+const broker_1 = __importDefault(require("../../broker/broker"));
 const createVpnKeyLogic = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Calculate expiresAt based on duration if not provided
@@ -34,7 +35,23 @@ const createVpnKeyLogic = (payload) => __awaiter(void 0, void 0, void 0, functio
                     break;
             }
         }
-        const vpnKeyPayload = Object.assign(Object.assign({}, payload), { expiresAt, status: payload.status || "active" });
+        const { serverId } = payload;
+        // Call server-specific service based on server choice
+        let serverResult;
+        if (payload.server) {
+            try {
+                serverResult = yield broker_1.default.call(`${payload.server}.createVpnKey`, payload);
+            }
+            catch (error) {
+                console.error(`Error calling service ${payload.server}.createVpnKey:`, error);
+                return responseStatus_1.default.UNKNOWN(`Failed to create VPN key on server ${payload.server}`);
+            }
+        }
+        const vpnKeyPayload = Object.assign(Object.assign({}, payload), { expiresAt, status: payload.status || "active", outlineKeyId: (serverResult === null || serverResult === void 0 ? void 0 : serverResult.outlineKeyId) || payload.outlineKeyId, accessUrl: (serverResult === null || serverResult === void 0 ? void 0 : serverResult.accessUrl) || payload.accessUrl });
+        // Ensure required fields are present
+        if (!vpnKeyPayload.outlineKeyId || !vpnKeyPayload.accessUrl) {
+            return responseStatus_1.default.INVALID_ARGUMENT("outlineKeyId and accessUrl are required");
+        }
         const vpnKey = yield (0, repository_1.createVpnKey)(vpnKeyPayload);
         if (!vpnKey) {
             return responseStatus_1.default.NOT_IMPLEMENTED("VPN key could not be created");
@@ -46,8 +63,17 @@ const createVpnKeyLogic = (payload) => __awaiter(void 0, void 0, void 0, functio
         return responseStatus_1.default.UNKNOWN("Failed to create VPN key");
     }
 });
-const updateVpnKeyLogic = (vpnKeyId, payload) => __awaiter(void 0, void 0, void 0, function* () {
+const updateVpnKeyLogic = (vpnKeyId, currentUserId, payload) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        // First check if the VPN key exists and if the current user is the creator
+        const existingVpnKey = yield (0, repository_1.getVpnKeyById)(vpnKeyId);
+        if (!existingVpnKey) {
+            return responseStatus_1.default.NOT_FOUND("VPN key not found");
+        }
+        // Check if the current user is the creator of this VPN key
+        if (existingVpnKey.createdBy.toString() !== currentUserId) {
+            return responseStatus_1.default.PERMISSION_DENIED("You can only update VPN keys you created");
+        }
         // Recalculate expiresAt if duration is being updated
         let updatePayload = Object.assign({}, payload);
         if (payload.duration && !payload.expiresAt) {
@@ -75,8 +101,17 @@ const updateVpnKeyLogic = (vpnKeyId, payload) => __awaiter(void 0, void 0, void 
         return responseStatus_1.default.UNKNOWN("Failed to update VPN key");
     }
 });
-const deleteVpnKeyLogic = (vpnKeyId) => __awaiter(void 0, void 0, void 0, function* () {
+const deleteVpnKeyLogic = (vpnKeyId, currentUserId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        // First check if the VPN key exists and if the current user is the creator
+        const existingVpnKey = yield (0, repository_1.getVpnKeyById)(vpnKeyId);
+        if (!existingVpnKey) {
+            return responseStatus_1.default.NOT_FOUND("VPN key not found");
+        }
+        // Check if the current user is the creator of this VPN key
+        if (existingVpnKey.createdBy.toString() !== currentUserId) {
+            return responseStatus_1.default.PERMISSION_DENIED("You can only delete VPN keys you created");
+        }
         const vpnKey = yield (0, repository_1.deleteVpnKey)(vpnKeyId);
         if (!vpnKey) {
             return responseStatus_1.default.NOT_FOUND("VPN key not found");
@@ -122,7 +157,9 @@ const getVpnKeysLogic = (currentPage_1, limit_1, ...args_1) => __awaiter(void 0,
 });
 const getVpnKeyByIdLogic = (vpnKeyId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log("getVpnKeyByIdLogic ");
         const vpnKey = yield (0, repository_1.getVpnKeyById)(vpnKeyId);
+        console.log("vpnKey : ", vpnKey);
         if (!vpnKey) {
             return responseStatus_1.default.NOT_FOUND("VPN key not found");
         }

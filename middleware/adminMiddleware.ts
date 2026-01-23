@@ -47,11 +47,44 @@ export const requireOwner = (
       );
       return;
     }
+    console.log("userData : ", req.user)
 
     // Check if user has owner role specifically
-    if (req.user.roleId !== "owner") {
+    if (req.user.roleId !== "owner")  {
       res.status(403).json(
         ResponseStatus.PERMISSION_DENIED("Owner access required")
+      );
+      return;
+    }
+
+    next();
+  } catch (error) {
+    console.error("Owner authorization error:", error);
+    res.status(500).json(
+      ResponseStatus.UNKNOWN("Authorization failed")
+    );
+  }
+};
+
+export const requireOwnerAndDeveloper= (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  try {
+    // Check if user is authenticated
+    if (!req.user) {
+      res.status(401).json(
+        ResponseStatus.UNAUTHENTICATED("Authentication required")
+      );
+      return;
+    }
+    console.log("userData : ", req.user)
+
+    // Check if user has owner role specifically
+    if (req.user.roleId === "agent")   {
+      res.status(403).json(
+        ResponseStatus.PERMISSION_DENIED("Owner and Develoepr access required")
       );
       return;
     }

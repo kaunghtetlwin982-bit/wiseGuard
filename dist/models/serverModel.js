@@ -42,6 +42,16 @@ const serverSchema = new mongoose_1.Schema({
         unique: true,
         trim: true,
     },
+    ip: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    servicecall: {
+        type: String,
+        required: true,
+        trim: true,
+    },
     serverUrl: {
         type: String,
         required: true,
