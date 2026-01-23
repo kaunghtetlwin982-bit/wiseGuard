@@ -109,7 +109,7 @@ const deleteVpnKeyLogic = (vpnKeyId, currentUserId) => __awaiter(void 0, void 0,
             return responseStatus_1.default.NOT_FOUND("VPN key not found");
         }
         // Check if the current user is the creator of this VPN key
-        if (existingVpnKey.createdBy.toString() !== currentUserId) {
+        if (existingVpnKey.createdBy._id.toString() !== currentUserId) {
             return responseStatus_1.default.PERMISSION_DENIED("You can only delete VPN keys you created");
         }
         const vpnKey = yield (0, repository_1.deleteVpnKey)(vpnKeyId);
@@ -159,7 +159,7 @@ const getVpnKeyByIdLogic = (vpnKeyId) => __awaiter(void 0, void 0, void 0, funct
     try {
         console.log("getVpnKeyByIdLogic ");
         const vpnKey = yield (0, repository_1.getVpnKeyById)(vpnKeyId);
-        console.log("vpnKey : ", vpnKey);
+        console.log("vpnKey 211 : ", vpnKey);
         if (!vpnKey) {
             return responseStatus_1.default.NOT_FOUND("VPN key not found");
         }

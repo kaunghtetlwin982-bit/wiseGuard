@@ -20,7 +20,20 @@ const router = express_1.default.Router();
 // Create a new VPN key
 router.post("/create", middleware_1.authenticateToken, middleware_1.requireOwnerAndDeveloper, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const payload = req.body;
+        const { serverId, outlineKeyId, accessUrl, duration, dataLimitBytes, expiresAt, status } = req.body;
+        // Construct payload with user data from req.user
+        const payload = {
+            userId: String(req.user.id), // User who will use the VPN key
+            createdBy: String(req.user.id), // User who is creating the VPN key
+            createdByRole: String(req.user.roleId), // Role of the user creating the key
+            serverId,
+            outlineKeyId,
+            accessUrl,
+            duration,
+            dataLimitBytes,
+            expiresAt,
+        };
+        console.log("payload :", payload);
         // Get server data
         const serverData = yield (0, service_1.getServerById)(payload.serverId);
         console.log("serverData : ", serverData);
@@ -68,7 +81,8 @@ router.delete("/:vpnKeyId", middleware_1.authenticateToken, middleware_1.require
             return res.status(400).json(serverData);
         }
         const servicecall = serverData.data.servicecall;
-        const result = yield broker_1.default.call(`${servicecall}.delete`, { vpnKeyId, currentUserId: userId });
+        console.log("Parmas : ", { vpnKeyId, currentUserId: userId });
+        const result = yield broker_1.default.call(`${servicecall}.delete`, { vpnKeyId, currentUserId: String(userId) });
         res.status(200).json(result);
     }
     catch (error) {
@@ -183,30 +197,29 @@ router.get("/user/:userId", middleware_1.authenticateToken, (req, res) => __awai
     }
 }));
 // Revoke VPN key
-router.put("/:vpnKeyId/revoke", middleware_1.authenticateToken, middleware_1.requireAdmin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { vpnKeyId } = req.params;
-        // Get VPN key data to get server info
-        const vpnKeyData = yield broker_1.default.call("vpn.getById", { vpnKeyId });
-        if (vpnKeyData.code !== "200") {
-            return res.status(404).json(vpnKeyData);
-        }
-        // Check if VPN key data and serverId exist
-        if (!vpnKeyData.data || !vpnKeyData.data.serverId) {
-            return res.status(400).json({ error: "VPN key data or server information not found" });
-        }
-        // Get server data to determine the correct service call
-        const serverData = yield (0, service_1.getServerById)(vpnKeyData.data.serverId);
-        if (serverData.code !== "200") {
-            return res.status(400).json(serverData);
-        }
-        const servicecall = serverData.data.servicecall;
-        const result = yield broker_1.default.call(`${servicecall}.revoke`, { vpnKeyId });
-        res.status(200).json(result);
-    }
-    catch (error) {
-        console.error("Error revoking VPN key:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-}));
+// router.put("/:vpnKeyId/revoke", authenticateToken, requireAdmin, async (req, res) => {
+//   try {
+//     const { vpnKeyId } = req.params;
+//     // Get VPN key data to get server info
+//     const vpnKeyData: any = await theBroker.call("vpn.getById", { vpnKeyId });
+//     if (vpnKeyData.code !== "200") {
+//       return res.status(404).json(vpnKeyData);
+//     }
+//     // Check if VPN key data and serverId exist
+//     if (!vpnKeyData.data || !vpnKeyData.data.serverId) {
+//       return res.status(400).json({ error: "VPN key data or server information not found" });
+//     }
+//     // Get server data to determine the correct service call
+//     const serverData = await getServerById(vpnKeyData.data.serverId);
+//     if (serverData.code !== "200") {
+//       return res.status(400).json(serverData);
+//     }
+//     const servicecall = serverData.data.servicecall;
+//     const result = await theBroker.call(`${servicecall}.revoke`, { vpnKeyId });
+//     res.status(200).json(result);
+//   } catch (error) {
+//     console.error("Error revoking VPN key:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
 exports.default = router;

@@ -145,7 +145,7 @@ const deleteVpnKeyLogic = async (vpnKeyId: string, currentUserId: string) => {
     }
 
     // Check if the current user is the creator of this VPN key
-    if (existingVpnKey.createdBy.toString() !== currentUserId) {
+    if (existingVpnKey.createdBy._id.toString() !== currentUserId) {
       return Response.PERMISSION_DENIED("You can only delete VPN keys you created");
     }
 
@@ -208,7 +208,7 @@ const getVpnKeyByIdLogic = async (vpnKeyId: string) => {
   try {
     console.log("getVpnKeyByIdLogic ")
     const vpnKey = await getVpnKeyById(vpnKeyId);
-    console.log("vpnKey : ", vpnKey)
+    console.log("vpnKey 211 : ", vpnKey)
 
     if (!vpnKey) {
       return Response.NOT_FOUND("VPN key not found");

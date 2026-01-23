@@ -117,6 +117,7 @@ const vpnService: Moleculer.ServiceSchema = {
         console.log("Params:", ctx.params);
         const params = ctx.params as { vpnKeyId: string; currentUserId: string };
         const { vpnKeyId, currentUserId } = params;
+        console.log("120 Data : ",{vpnKeyId, currentUserId })
         return await logic.deleteVpnKeyLogic(vpnKeyId, currentUserId);
       },
     },
@@ -190,18 +191,18 @@ const vpnService: Moleculer.ServiceSchema = {
     },
 
     // Revoke VPN key
-    revoke: {
-      params: {
-        vpnKeyId: "string",
-      },
-      async handler(ctx: Moleculer.Context) {
-        console.log("Calling vpn.revoke");
-        console.log("Params:", ctx.params);
-        const params = ctx.params as { vpnKeyId: string };
-        const { vpnKeyId } = params;
-        return await logic.revokeVpnKeyLogic(vpnKeyId);
-      },
-    },
+    // revoke: {
+    //   params: {
+    //     vpnKeyId: "string",
+    //   },
+    //   async handler(ctx: Moleculer.Context) {
+    //     console.log("Calling vpn.revoke");
+    //     console.log("Params:", ctx.params);
+    //     const params = ctx.params as { vpnKeyId: string };
+    //     const { vpnKeyId } = params;
+    //     return await logic.revokeVpnKeyLogic(vpnKeyId);
+    //   },
+    // },
   },
 };
 

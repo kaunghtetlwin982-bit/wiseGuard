@@ -106,6 +106,7 @@ const vpnService = {
                     console.log("Params:", ctx.params);
                     const params = ctx.params;
                     const { vpnKeyId, currentUserId } = params;
+                    console.log("120 Data : ", { vpnKeyId, currentUserId });
                     return yield logic_1.default.deleteVpnKeyLogic(vpnKeyId, currentUserId);
                 });
             },
@@ -162,20 +163,18 @@ const vpnService = {
             },
         },
         // Revoke VPN key
-        revoke: {
-            params: {
-                vpnKeyId: "string",
-            },
-            handler(ctx) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    console.log("Calling vpn.revoke");
-                    console.log("Params:", ctx.params);
-                    const params = ctx.params;
-                    const { vpnKeyId } = params;
-                    return yield logic_1.default.revokeVpnKeyLogic(vpnKeyId);
-                });
-            },
-        },
+        // revoke: {
+        //   params: {
+        //     vpnKeyId: "string",
+        //   },
+        //   async handler(ctx: Moleculer.Context) {
+        //     console.log("Calling vpn.revoke");
+        //     console.log("Params:", ctx.params);
+        //     const params = ctx.params as { vpnKeyId: string };
+        //     const { vpnKeyId } = params;
+        //     return await logic.revokeVpnKeyLogic(vpnKeyId);
+        //   },
+        // },
     },
 };
 exports.default = vpnService;
