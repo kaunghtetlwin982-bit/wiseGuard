@@ -24,6 +24,7 @@ export const getServers = async (
 };
 
 export const getServerById = async (serverId: string) => {
+  
   return logic.getServerByIdLogic(serverId);
 };
 

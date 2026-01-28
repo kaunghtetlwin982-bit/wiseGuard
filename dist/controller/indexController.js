@@ -37,4 +37,23 @@ router.post("/create", (req, res) => __awaiter(void 0, void 0, void 0, function*
         res.json(error);
     }
 }));
+// router = express.Router();
+// Mount auth routes
+router.use("/auth", authController_1.default);
+// Mount user routes
+router.use("/users", userController_1.default);
+// Mount VPN routes
+router.use("/vpn", vpnConroller_1.default);
+// Mount server routes
+router.use("/servers", serverController_1.default);
+router.post("/list", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { name } = req.body;
+        const result = yield (0, outline_helper_1.listVpnKeys)();
+        res.json(result);
+    }
+    catch (error) {
+        res.json(error);
+    }
+}));
 exports.default = router;

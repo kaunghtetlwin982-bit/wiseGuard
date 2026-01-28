@@ -10,8 +10,8 @@ router.post("/create", authenticateToken, requireOwnerAndDeveloper, async (req, 
   try {
     const {
       serverId,
-      outlineKeyId,
-      accessUrl,
+      // outlineKeyId,
+      // accessUrl,
       duration,
       dataLimitBytes,
       expiresAt,
@@ -19,31 +19,39 @@ router.post("/create", authenticateToken, requireOwnerAndDeveloper, async (req, 
     } = req.body;
 
     // Construct payload with user data from req.user
-    const payload = {
+   
+    // Get server data
+    const serverData : any= await getServerById(serverId);
+    if(serverData.code !== "200"){
+      return  res.json(serverData)
+    }
+    const {serverUrl, _id} = serverData;
+
+     const payload = {
       userId: String(req.user.id),           // User who will use the VPN key
       createdBy: String(req.user.id),        // User who is creating the VPN key
       createdByRole: String(req.user.roleId), // Role of the user creating the key
       serverId,
-      outlineKeyId,
-      accessUrl,
+      outlineKeyId : "",
+      accessUrl : serverUrl,
       duration,
       dataLimitBytes,
       expiresAt,
     };
 
     console.log("payload :" , payload)
-    // Get server data
-    const serverData = await getServerById(payload.serverId);
+    res.json(serverData)
+    
     console.log("serverData : ", serverData)
-    if (serverData.code !== "200") {
-      return res.status(400).json(serverData);
-    }
+    // if (serverData.code !== "200") {
+    //   return res.status(400).json(serverData);
+    // };
 
-    const servicecall = serverData.data.servicecall;
+    // const servicecall = serverData.data.servicecall;
 
-    const result: any = await theBroker.call(`${servicecall}.create`, payload)
+    // const result: any = await theBroker.call(`${servicecall}.create`, payload)
 
-    res.status(200).json(result);
+    // res.status(200).json(result);
   } catch (error) {
     console.error("Error creating VPN key:", error);
     res.status(500).json({ error: "Internal server error" });

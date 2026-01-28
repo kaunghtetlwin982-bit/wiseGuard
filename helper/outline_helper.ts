@@ -25,23 +25,34 @@ const agent = new https.Agent({
 });
 
 
-const OUTLINE_API="https://150.95.82.134:60248/Jk2U7DyIeIYR-dN6jTYolA"
+// const OUTLINE_API="https://150.95.82.134:60248/Jk2U7DyIeIYR-dN6jTYolA"
 
 
-export async function createVpnKey(name : string) {
+export async function createVpnKey(name : string,OUTLINE_API: string ) {
   const { data } = await axios.post(
     `${OUTLINE_API}/access-keys`,
     {},
     { httpsAgent: agent }
   );
 
-  if (name) {
-    await axios.put(
-      `${OUTLINE_API}/access-keys/${data.id}/name`,
-      { name },
-      { httpsAgent: agent }
-    );
-  }
+  console.log("Data : ", data)
+  // if (name) {
+  //   await axios.put(
+  //     `${OUTLINE_API}/access-keys/${data.id}/name`,
+  //     { name },
+  //     { httpsAgent: agent }
+  //   );
+  // }
 
   return data;
+}
+
+
+export async function listVpnKeys() {
+  const { data } = await axios.get(
+    `${OUTLINE_API}/access-keys`,
+    { httpsAgent: agent }
+  );
+
+  return data.accessKeys;
 }

@@ -20,29 +20,37 @@ const router = express_1.default.Router();
 // Create a new VPN key
 router.post("/create", middleware_1.authenticateToken, middleware_1.requireOwnerAndDeveloper, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { serverId, outlineKeyId, accessUrl, duration, dataLimitBytes, expiresAt, status } = req.body;
+        const { serverId, 
+        // outlineKeyId,
+        // accessUrl,
+        duration, dataLimitBytes, expiresAt, status } = req.body;
         // Construct payload with user data from req.user
+        // Get server data
+        const serverData = yield (0, service_1.getServerById)(serverId);
+        if (serverData.code !== "200") {
+            return res.json(serverData);
+        }
+        const { serverUrl, _id } = serverData;
         const payload = {
             userId: String(req.user.id), // User who will use the VPN key
             createdBy: String(req.user.id), // User who is creating the VPN key
             createdByRole: String(req.user.roleId), // Role of the user creating the key
             serverId,
-            outlineKeyId,
-            accessUrl,
+            outlineKeyId: "",
+            accessUrl: serverUrl,
             duration,
             dataLimitBytes,
             expiresAt,
         };
         console.log("payload :", payload);
-        // Get server data
-        const serverData = yield (0, service_1.getServerById)(payload.serverId);
+        res.json(serverData);
         console.log("serverData : ", serverData);
-        if (serverData.code !== "200") {
-            return res.status(400).json(serverData);
-        }
-        const servicecall = serverData.data.servicecall;
-        const result = yield broker_1.default.call(`${servicecall}.create`, payload);
-        res.status(200).json(result);
+        // if (serverData.code !== "200") {
+        //   return res.status(400).json(serverData);
+        // };
+        // const servicecall = serverData.data.servicecall;
+        // const result: any = await theBroker.call(`${servicecall}.create`, payload)
+        // res.status(200).json(result);
     }
     catch (error) {
         console.error("Error creating VPN key:", error);
