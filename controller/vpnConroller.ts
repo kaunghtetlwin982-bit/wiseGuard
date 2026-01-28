@@ -23,8 +23,10 @@ router.post("/create", authenticateToken, requireOwnerAndDeveloper, async (req, 
     // Get server data
     const serverData : any= await getServerById(serverId);
     if(serverData.code !== "200"){
-      return  res.json(serverData)
+      return  res.json(serverData);
     }
+
+    
     const {serverUrl, _id} = serverData;
 
      const payload = {
