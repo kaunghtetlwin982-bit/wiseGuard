@@ -19,18 +19,6 @@ router.use("/vpn", vpnController);
 // Mount server routes
 router.use("/servers", serverController);
 
-router.post("/create", async(req, res)=>{
-    try {
-        const {name}= req.body;
-        const result = await createVpnKey(name);
-        res.json(result)
-        
-    } catch (error: any) {
-        res.json(error)
-    }
-})
-// router = express.Router();
-
 // Mount auth routes
 router.use("/auth", authController);
 
@@ -42,16 +30,5 @@ router.use("/vpn", vpnController);
 
 // Mount server routes
 router.use("/servers", serverController);
-
-router.post("/list", async(req, res)=>{
-    try {
-        const {name}= req.body;
-        const result = await listVpnKeys();
-        res.json(result)
-        
-    } catch (error: any) {
-        res.json(error)
-    }
-})
 
 export default router;

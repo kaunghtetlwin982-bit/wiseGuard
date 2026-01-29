@@ -127,8 +127,14 @@ const getVpnKeysLogic = (currentPage_1, limit_1, ...args_1) => __awaiter(void 0,
     try {
         const page = Math.max(Number(currentPage), 1);
         const perPage = Math.max(Number(limit), 1);
-        const total = yield (0, repository_1.countVpnKeys)(filters);
-        const vpnKeys = yield (0, repository_1.getVpnKeys)(page, perPage, sort_by, sort_order, filters);
+        console.log("getVpnKeysLogic called with filters:", filters);
+        // Parse filters to convert string IDs to ObjectIds for MongoDB matching
+        const parsedFilters = parseVpnFilters(filters);
+        console.log("After parsing - parsedFilters:", parsedFilters);
+        const total = yield (0, repository_1.countVpnKeys)(parsedFilters);
+        console.log("Total count:", total);
+        const vpnKeys = yield (0, repository_1.getVpnKeys)(page, perPage, sort_by, sort_order, parsedFilters);
+        console.log("VPN Keys found:", (vpnKeys === null || vpnKeys === void 0 ? void 0 : vpnKeys.length) || 0);
         if (total === 0) {
             return responseStatus_1.default.OK({
                 vpnKeys: [],
@@ -195,14 +201,30 @@ const revokeVpnKeyLogic = (vpnKeyId) => __awaiter(void 0, void 0, void 0, functi
 });
 const parseVpnFilters = (filters = {}) => {
     const match = {};
+    console.log("parseVpnFilters input:", filters);
     if (filters.userId) {
-        match.userId = new mongoose_1.default.Types.ObjectId(filters.userId);
+        try {
+            match.userId = new mongoose_1.default.Types.ObjectId(filters.userId);
+        }
+        catch (err) {
+            console.error("Invalid userId format:", filters.userId);
+        }
     }
     if (filters.createdBy) {
-        match.createdBy = new mongoose_1.default.Types.ObjectId(filters.createdBy);
+        try {
+            match.createdBy = new mongoose_1.default.Types.ObjectId(filters.createdBy);
+        }
+        catch (err) {
+            console.error("Invalid createdBy format:", filters.createdBy);
+        }
     }
     if (filters.serverId) {
-        match.serverId = new mongoose_1.default.Types.ObjectId(filters.serverId);
+        try {
+            match.serverId = new mongoose_1.default.Types.ObjectId(filters.serverId);
+        }
+        catch (err) {
+            console.error("Invalid serverId format:", filters.serverId);
+        }
     }
     if (filters.status) {
         match.status = filters.status;
@@ -228,6 +250,7 @@ const parseVpnFilters = (filters = {}) => {
     if (filters.expiresAt) {
         match.expiresAt = { $lte: new Date() };
     }
+    console.log("parseVpnFilters output:", match);
     return match;
 };
 const expireVpnKeys = () => __awaiter(void 0, void 0, void 0, function* () {

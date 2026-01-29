@@ -94,7 +94,7 @@ const getVpnKeys = (currentPage_1, limit_1, ...args_1) => __awaiter(void 0, [cur
             server: {
                 id: "$server._id",
                 name: "$server.name",
-                serverUrl: "$server.serverUrl",
+                // serverUrl: "$server.serverUrl",
                 location: "$server.location"
             },
             createdAt: {

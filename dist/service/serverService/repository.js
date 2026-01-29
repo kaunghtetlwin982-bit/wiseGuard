@@ -70,7 +70,12 @@ const getServers = (currentPage_1, limit_1, ...args_1) => __awaiter(void 0, [cur
 });
 exports.getServers = getServers;
 const getServerById = (serverId) => __awaiter(void 0, void 0, void 0, function* () {
-    return serverModel_1.Server.findById(serverId).populate("createdBy", "name email");
+    const server = yield serverModel_1.Server.findById(serverId)
+        .populate("createdBy", "name email")
+        .lean(); // return plain object
+    if (!server)
+        return null;
+    return Object.assign(Object.assign({}, server), { id: server._id, _id: undefined });
 });
 exports.getServerById = getServerById;
 const getServersByUserId = (userId) => __awaiter(void 0, void 0, void 0, function* () {

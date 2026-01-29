@@ -171,8 +171,18 @@ const getVpnKeysLogic = async (
     const page = Math.max(Number(currentPage), 1);
     const perPage = Math.max(Number(limit), 1);
 
-    const total = await countVpnKeys(filters);
-    const vpnKeys = await getVpnKeys(page, perPage, sort_by, sort_order, filters);
+    console.log("getVpnKeysLogic called with filters:", filters);
+
+    // Parse filters to convert string IDs to ObjectIds for MongoDB matching
+    const parsedFilters = parseVpnFilters(filters);
+
+    console.log("After parsing - parsedFilters:", parsedFilters);
+
+    const total = await countVpnKeys(parsedFilters);
+    console.log("Total count:", total);
+
+    const vpnKeys = await getVpnKeys(page, perPage, sort_by, sort_order, parsedFilters);
+    console.log("VPN Keys found:", vpnKeys?.length || 0);
 
     if (total === 0) {
       return Response.OK({
@@ -248,17 +258,30 @@ const revokeVpnKeyLogic = async (vpnKeyId: string) => {
 
 const parseVpnFilters = (filters: any = {}) => {
   const match: any = {};
+  console.log("parseVpnFilters input:", filters);
 
   if (filters.userId) {
-    match.userId = new mongoose.Types.ObjectId(filters.userId);
+    try {
+      match.userId = new mongoose.Types.ObjectId(filters.userId);
+    } catch (err) {
+      console.error("Invalid userId format:", filters.userId);
+    }
   }
 
   if (filters.createdBy) {
-    match.createdBy = new mongoose.Types.ObjectId(filters.createdBy);
+    try {
+      match.createdBy = new mongoose.Types.ObjectId(filters.createdBy);
+    } catch (err) {
+      console.error("Invalid createdBy format:", filters.createdBy);
+    }
   }
 
   if (filters.serverId) {
-    match.serverId = new mongoose.Types.ObjectId(filters.serverId);
+    try {
+      match.serverId = new mongoose.Types.ObjectId(filters.serverId);
+    } catch (err) {
+      console.error("Invalid serverId format:", filters.serverId);
+    }
   }
 
   if (filters.status) {
@@ -291,6 +314,7 @@ const parseVpnFilters = (filters: any = {}) => {
     match.expiresAt = { $lte: new Date() };
   }
 
+  console.log("parseVpnFilters output:", match);
   return match;
 };
 
@@ -307,7 +331,7 @@ const expireVpnKeys = async () => {
       }
     );
 
-    console.log(`Expired ${result.modifiedCount} VPN keys`);
+    console.log(`Expired ${result.modifiedCount} VPN keys`)
     return result;
   } catch (error) {
     console.error("Error expiring VPN keys:", error);

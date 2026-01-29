@@ -95,7 +95,17 @@ export const getServers = async (
 };
 
 export const getServerById = async (serverId: string) => {
-  return Server.findById(serverId).populate("createdBy", "name email");
+  const server = await Server.findById(serverId)
+    .populate("createdBy", "name email")
+    .lean(); // return plain object
+
+  if (!server) return null;
+
+  return {
+    ...server,
+    id: server._id,
+    _id: undefined,
+  };
 };
 
 export const getServersByUserId = async (userId: string) => {

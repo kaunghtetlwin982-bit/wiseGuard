@@ -121,7 +121,7 @@ export const getVpnKeys = async (
       server: {
         id: "$server._id",
         name: "$server.name",
-        serverUrl: "$server.serverUrl",
+        // serverUrl: "$server.serverUrl",
         location: "$server.location"
       },
       createdAt: {
